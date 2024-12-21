@@ -8,7 +8,10 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
-import { createCheckoutSessionAction } from "./actions";
+import {
+  createCheckoutSessionAction,
+  createSubscriptionCancelSessionAction,
+} from "./actions";
 import { auth } from "@/services/auth";
 import { getUserCurrentPlan } from "@/services/stripe";
 
@@ -17,7 +20,13 @@ const BillingSettingsPage = async () => {
   const plan = await getUserCurrentPlan(session?.user.id as string);
 
   return (
-    <form action={createCheckoutSessionAction}>
+    <form
+      action={
+        plan.name === "free"
+          ? createCheckoutSessionAction
+          : createSubscriptionCancelSessionAction
+      }
+    >
       <Card>
         <CardHeader className="border-b border-border">
           <CardTitle>Uso do plano</CardTitle>
@@ -49,9 +58,18 @@ const BillingSettingsPage = async () => {
         </CardContent>
         <CardFooter className="flex items-center justify-between border-t pt-6">
           <span className="text-muted-foreground text-sm">
-            Para um maior limite, assine o plano PRO
+            {plan.name === "free"
+              ? "Para um maior limite, assine o plano PRO"
+              : "Para cancelar o seu plano clique no botão ao lado"}
           </span>
-          <Button type="submit">Assine por R$9/mês</Button>
+          <Button
+            type="submit"
+            variant={plan.name === "pro" ? "destructive" : "default"}
+          >
+            {plan.name === "free"
+              ? "Assine por R$9/mês"
+              : "Cancelar meu plano PRO"}
+          </Button>
         </CardFooter>
       </Card>
     </form>

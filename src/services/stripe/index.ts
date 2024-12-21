@@ -95,6 +95,46 @@ export const createCheckoutSession = async (
   }
 };
 
+export const createSubscriptionCancelSession = async (
+  userEmail: string,
+  userStripeSubscriptionId: string
+) => {
+  try {
+    let customer = await createStripeCustomer({
+      email: userEmail,
+    });
+
+    const subscription = await stripe.subscriptionItems.list({
+      subscription: userStripeSubscriptionId,
+      limit: 1,
+    });
+
+    const session = await stripe.billingPortal.sessions.create({
+      customer: customer.id,
+      return_url: "http://localhost:3000/app/settings/billing",
+      flow_data: {
+        type: "subscription_cancel",
+        after_completion: {
+          type: "redirect",
+          redirect: {
+            return_url:
+              "http://localhost:3000/app/settings/billing?success=true",
+          },
+        },
+        subscription_cancel: {
+          subscription: userStripeSubscriptionId,
+        },
+      },
+    });
+
+    return {
+      url: session.url,
+    };
+  } catch (error) {
+    throw new Error("Error to create cancel session");
+  }
+};
+
 export const handleProcessWebhookUpdatedSubscription = async (event: {
   object: Stripe.Subscription;
 }) => {
